@@ -1,19 +1,20 @@
 "use client";
 import React from 'react'
 import  { useState } from 'react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from './ui/drawer';
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from './ui/drawer';
 import { useForm } from 'react-hook-form';
 import {zodResolver} from "@hookform/resolvers/zod";
 import { accountSchema } from '@/app/lib/schema';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { Button } from './ui/button';
 
 
 const CreateAccountDrawer = ({children}) => {
     const [open, setOpen] =useState(false);
 
-  const {register,handlesubmit,formState:{errors},SetValue,watch,reset,}=useForm({
+  const {register,handleSubmit,formState:{errors},SetValue,watch,reset,}=useForm({
             resolver:zodResolver(accountSchema),
              defaultValues:{
                name:"",
@@ -23,7 +24,13 @@ const CreateAccountDrawer = ({children}) => {
 
              },
         }) ;
-  
+   
+
+
+        const onSubmit=async(data)=>{
+                   console.log(data);
+        };
+
     return (
     <Drawer open={open} onOpenChange={setOpen}>
 
@@ -38,7 +45,7 @@ const CreateAccountDrawer = ({children}) => {
 
 
                 <div className="px-4 pb-4" >
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} >
                    
                    <div className="space -y-2">
 
@@ -64,7 +71,7 @@ const CreateAccountDrawer = ({children}) => {
 </label>
 
 <Select
-                onValueChange={(value) => setValue("type", value)}
+                onValueChange={(value) => SetValue("type", value)}
                 defaultValue={watch("type")}
               >
                 <SelectTrigger id="type">
@@ -115,12 +122,24 @@ const CreateAccountDrawer = ({children}) => {
               <Switch
                 id="isDefault"
                 checked={watch("isDefault")}
-                onCheckedChange={(checked) => SetValue("isDefault", checked)}
+                onCheckedChange={(checked) =>SetValue("isDefault", checked)}
+                
               />
             </div>
 
 
+               <div className="flex gap-4 pt-4">
+               <DrawerClose asChild>
+                    <Button type="button" variant="outline" className="flex-1">
+                         cancel
+                    </Button>
+               </DrawerClose>
 
+                 <Button type="submit" className="flex-1"> 
+                    create Account
+                 </Button>
+
+               </div>
                     
 
                     </form>
