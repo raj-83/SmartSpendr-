@@ -7,6 +7,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import { accountSchema } from '@/app/lib/schema';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
 
 
 const CreateAccountDrawer = ({children}) => {
@@ -78,10 +79,48 @@ const CreateAccountDrawer = ({children}) => {
                    </div>
 
 
+                   <div className="space-y-2">
+              <label
+                htmlFor="balance"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Initial Balance
+              </label>
+              <Input
+                id="balance"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                {...register("balance")}
+              />
+              {errors.balance && (
+                <p className="text-sm text-red-500">{errors.balance.message}</p>
+              )}
+            </div>
+
+                
+
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <label
+                  htmlFor="isDefault"
+                  className="text-base font-medium cursor-pointer"
+                >
+                  Set as Default
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  This account will be selected by default for transactions
+                </p>
+              </div>
+              <Switch
+                id="isDefault"
+                checked={watch("isDefault")}
+                onCheckedChange={(checked) => SetValue("isDefault", checked)}
+              />
+            </div>
 
 
 
-                   
                     
 
                     </form>
