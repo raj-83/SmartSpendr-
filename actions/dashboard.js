@@ -8,10 +8,15 @@ import { revalidatePath } from "next/cache";
 
 const serializeTransaction = (obj) => {
     const serialized = { ...obj };
+
     if (obj.balance) {
       serialized.balance = obj.balance.toNumber();
     }
-    
+
+    if (obj.amount) {
+      serialized.amount = obj.amount.toNumber();
+    }
+       
   };
 
 
@@ -34,7 +39,7 @@ export async function createAccount(data){
        
        // convert balance to float before saving
             
-       const balanceFloat = Parsefloat(data.balance);
+       const balanceFloat = parseFloat(data.balance);
        if (isNaN(balanceFloat)) {
          throw new Error("Invalid balance amount");
        }
@@ -84,3 +89,50 @@ export async function createAccount(data){
        }
 
 }
+
+
+
+export async function getUserAccounts(){
+
+
+
+
+  const {userId} =await auth();
+  if( !userId) throw new Error ("Unauthorized");
+
+  const user =await db.user.findUnique({
+     where:{
+      clerkUserId:userId
+     },
+  });
+
+  if(!user){
+      throw new Error("user not found");
+  }
+
+    const accounts =await db.accoun.findMany({
+
+         where:{userId:user.id },
+
+         orderBy:{ createdAt:"dsc"},
+         include:{
+
+            _count:{
+
+            
+            select:{
+               transactions:true,
+
+            },
+
+         },
+        },
+    });
+
+
+    const serializedAccount = accounts.map(serializeTransaction);
+
+    return serializedAccount;
+
+}
+
