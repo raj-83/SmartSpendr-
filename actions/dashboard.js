@@ -16,6 +16,8 @@ const serializeTransaction = (obj) => {
     if (obj.amount) {
       serialized.amount = obj.amount.toNumber();
     }
+
+      return serialized;
        
   };
 
@@ -110,11 +112,11 @@ export async function getUserAccounts(){
       throw new Error("user not found");
   }
 
-    const accounts =await db.accoun.findMany({
+    const accounts =await db.account.findMany({
 
          where:{userId:user.id },
 
-         orderBy:{ createdAt:"dsc"},
+         orderBy:{ createdAt:"desc"},
          include:{
 
             _count:{
