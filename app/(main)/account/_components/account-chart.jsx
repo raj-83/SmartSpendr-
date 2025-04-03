@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, Rectangle, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 
+
 const DATE_RANGES = {
     "7D": { label: "Last 7 Days", days: 7 },
     "1M": { label: "Last Month", days: 30 },
@@ -170,7 +171,7 @@ const AccountChart = ({ transactions }) => {
           tickFormatter={(value)=> `$${value}`}/>
 
 
-          <Tooltip />
+          <Tooltip formatter={(value)=>[`$${value}`,undefined]}/>
           <Legend />
           <Bar 
           dataKey="income" name="Income"  fill="#22c55e"  

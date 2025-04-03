@@ -26,7 +26,7 @@ async function  DashboardPage  ()  {
      {/*Budget Progress */}
 
 
-     {defaultAccount && (<BudgetProgress intialBudget={budgetData ?.budget}/>)}
+    
      
 
          {/*Overview */}
