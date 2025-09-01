@@ -131,14 +131,14 @@
 }
 
 .hero-image-wrapper{
-  perspective:1000px;
+  perspective:700px;
 }
 
 .hero-image{
 
-  transform:rotateX(15deg) scale(1);
-  transition:transform 0.5s ease out;
-  will-change:transform;
+  transform: rotateX(15deg) scale(1);
+  transition: transform 0.5s ease-out ;
+  will-change: transform;
 
 }
 
