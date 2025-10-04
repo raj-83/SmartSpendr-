@@ -2,8 +2,8 @@
 import { serve } from 'inngest/next';
 
 
-import { inngest } from '@/app/lib/inngest/client';
-import { checkBudgetAlert } from '@/app/lib/inngest/function';
+import { inngest } from '@/lib/inngest/client';
+import { checkBudgetAlert } from '@/lib/inngest/function';
 
 
 
