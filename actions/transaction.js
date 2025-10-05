@@ -7,81 +7,81 @@ import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import {GoogleGenerativeAI} from "@google/generative-ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 
 const serializeAmount = (obj) => ({
-   ...obj,
-   amount: obj.amount.toNumber(),
+    ...obj,
+    amount: obj.amount.toNumber(),
 
 });
 
-export async function  createTransaction(data){
+export async function createTransaction(data) {
 
 
-  try{
+    try {
 
-       const {userId} = await auth();
+        const { userId } = await auth();
 
-       if(!userId) throw new Error("Unauthorized");
+        if (!userId) throw new Error("Unauthorized");
 
-       //Arcjet to add rate limiting
-       const req = await request();
+        //Arcjet to add rate limiting
+        const req = await request();
 
-       //check rate limit
+        //check rate limit
 
-       const decision = await aj.protect(req,{
-           userId,
-           requested:1,
+        const decision = await aj.protect(req, {
+            userId,
+            requested: 1,
 
-       });
+        });
 
-       if(decision.isDenied()){
-           
-        if(decision.reason.isRateLimit()){
-              const {remaining,reset} =decision.reason;
-              console.error({
-                 code:"Rate_Limit_EXCEEDED",
-                 details:{
-                     remaining,
-                     resetInSeconds:reset,
-                 },
-              });
+        if (decision.isDenied()) {
 
-              throw new Error ("Too many requests.Please try again later.");
+            if (decision.reason.isRateLimit()) {
+                const { remaining, reset } = decision.reason;
+                console.error({
+                    code: "Rate_Limit_EXCEEDED",
+                    details: {
+                        remaining,
+                        resetInSeconds: reset,
+                    },
+                });
+
+                throw new Error("Too many requests.Please try again later.");
+            }
+            throw new Error("Requests Blocked");
         }
-        throw new Error("Requests Blocked");
-       }
 
-       const user = await db.user.findUnique({
-        where:{clerkUserId:userId},
-       });
-       
-         if(!user) throw new Error("User not found");
+        const user = await db.user.findUnique({
+            where: { clerkUserId: userId },
+        });
 
-         const account = await db.account.findUnique({
-            where:{
-                id:data.accountId,
-                userId:user.id,
+        if (!user) throw new Error("User not found");
+
+        const account = await db.account.findUnique({
+            where: {
+                id: data.accountId,
+                userId: user.id,
             },
-         });
+        });
 
-         if(!account) throw new Error("Account not found");
+        if (!account) throw new Error("Account not found");
 
-         const balanceChange = data.type === "EXPENSE" ? -data.amount : data.amount;
+        const balanceChange = data.type === "EXPENSE" ? -data.amount : data.amount;
 
         const newBalance = account.balance.toNumber() + balanceChange;
 
-        const transaction = await   db.$transaction(async (tx)=>{
-             
+        const transaction = await db.$transaction(async (tx) => {
+
             const newTransaction = await tx.transaction.create({
-                data:{
+                data: {
                     ...data,
-                    userId:user.id,
+                    userId: user.id,
                     nextRecurringDate: data.isRecurring && data.recurringInterval ? calculateNextRecurringDate(data.date, data.recurringInterval) : null,
 
                 },
@@ -89,9 +89,9 @@ export async function  createTransaction(data){
 
 
             await tx.account.update({
-                where:{id:account.id},
-                data:{
-                    balance:newBalance,
+                where: { id: account.id },
+                data: {
+                    balance: newBalance,
                 },
             });
             return newTransaction;
@@ -100,13 +100,13 @@ export async function  createTransaction(data){
         revalidatePath("/dashboard");
         revalidatePath(`/account/${transaction.accountId}`);
 
-        return {success:true, data:serializeAmount(transaction)};
+        return { success: true, data: serializeAmount(transaction) };
 
 
 
-     } catch(error){
-        throw new Error("Failed to create transaction: " + error.message);   
-  }
+    } catch (error) {
+        throw new Error("Failed to create transaction: " + error.message);
+    }
 
 }
 
@@ -117,7 +117,7 @@ function calculateNextRecurringDate(startDate, interval) {
     switch (interval) {
         case 'DAILY':
             date.setDate(date.getDate() + 1);
-            break;  
+            break;
         case 'WEEKLY':
             date.setDate(date.getDate() + 7);
             break;
@@ -126,29 +126,29 @@ function calculateNextRecurringDate(startDate, interval) {
             break;
         case 'YEARLY':
             date.setFullYear(date.getFullYear() + 1);
-            break;  
+            break;
 
     }
-         return date;
+    return date;
 }
 
 
-export async function scanReceipt (file){
-        
+export async function scanReceipt(file) {
 
-    try{
-         
-        const model = genAI.getGenerativeModel({model:"gemini-2.5-flash"});
+
+    try {
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         //convert file to arraybuffer
         const arrayBuffer = await file.arrayBuffer();
 
-       //convert ArrayBuffer to Base64
+        //convert ArrayBuffer to Base64
 
-       const base64String = Buffer.from(arrayBuffer).toString("base64");
+        const base64String = Buffer.from(arrayBuffer).toString("base64");
 
 
-       const prompt = `
+        const prompt = `
       Analyze this receipt image and extract the following information in JSON format:
       - Total amount (just the number)
       - Date (in ISO format)
@@ -167,50 +167,134 @@ export async function scanReceipt (file){
 
       If its not a recipt, return an empty object
     `;
-       const result = await model.generateContent([{
+        const result = await model.generateContent([{
 
-           inlineData:{
-              data:base64String,
-              mimeType:file.type,
+            inlineData: {
+                data: base64String,
+                mimeType: file.type,
 
-           },
-           
-
-       },
-    //    prompt,
-     { text: prompt },
-    ]);
-    
-         const response = await result.response;
-
-         const text = response.text();
-
-           const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+            },
 
 
-      try{
-         const data =JSON.parse(cleanedText);
-         return {
-             amount:parseFloat(data.amount),
-             date:new Date(data.date),
-             description:data.description,
-             category:data.category,
-             merchantName:data.merchantName,
-         };
-      }
+        },
+        //    prompt,
+        { text: prompt },
+        ]);
 
-      catch(parseError){
-          
-        console.error("Error Parsing JSON response:",parseError);
-        throw new Error ("Invalid response format from Gemini");
-      }
+        const response = await result.response;
+
+        const text = response.text();
+
+        const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
+
+
+        try {
+            const data = JSON.parse(cleanedText);
+            return {
+                amount: parseFloat(data.amount),
+                date: new Date(data.date),
+                description: data.description,
+                category: data.category,
+                merchantName: data.merchantName,
+            };
+        }
+
+        catch (parseError) {
+
+            console.error("Error Parsing JSON response:", parseError);
+            throw new Error("Invalid response format from Gemini");
+        }
 
 
     }
-    catch(error){
-        console.error("Error scanning receipt:",error.message);
-         throw new Error ("Failed to Scan reciept");
-        
+    catch (error) {
+        console.error("Error scanning receipt:", error.message);
+        throw new Error("Failed to Scan reciept");
+
+    }
+}
+
+export async function getTransaction(id) {
+
+    const { userId } = await auth();
+
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+        where: { clerkUserId: userId },
+    });
+    if (!user) throw new Error("User not found");
+
+    const transaction = await db.transaction.findUnique({
+        where: { id, userId: user.id },
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+    return serializeAmount(transaction);
+
+}
+
+export async function updateTransaction(id, data) {
+    try {
+        const { userId } = await auth();
+        if (!userId) throw new Error("Unauthorized");
+        const user = await db.user.findUnique({
+            where: { clerkUserId: userId },
+        });
+        if (!user) throw new Error("User not found");
+
+        //Get original transaction to calculate balance change
+        const originalTransaction = await db.transaction.findUnique({
+            where: { id, userId: user.id },
+            include: {
+                account: true,
+            },
+        });
+
+        if (!originalTransaction) throw new Error("Transaction not found");
+
+        //calcaulate balance changes
+
+        const oldBalanceChange = originalTransaction.type === "EXPENSE" ? -originalTransaction.amount.toNumber() : originalTransaction.amount.toNumber();
+
+        const newBalanceChange = data.type === "EXPENSE" ? -data.amount : data.amount;
+
+        const netBalanceChange = newBalanceChange - oldBalanceChange;
+
+        //update transaction and account balance in a transaction
+
+        const transaction = await db.$transaction(async (tx) => {
+            const updated = await tx.transaction.update({
+                where: {
+                    id,
+                    userId: user.id,
+                },
+
+                data: {
+                    ...data,
+                    nextRecurringDate: data.isRecurring && data.recurringInterval ? calculateNextRecurringDate(data.date, data.recurringInterval) : null,
+                },
+            });
+
+            await tx.account.update({
+                where: { id: data.accountId },
+                data: {
+                    balance: {
+                        increment: netBalanceChange,
+                    },
+                },
+            });
+
+            return updated;
+
+        });
+        revalidatePath("/dashboard");
+        revalidatePath(`/account/${data.accountId}`);
+
+        return { success: true, data: serializeAmount(transaction) };
+
+    } catch (error) {
+        throw new Error( error.message);
     }
 }
 
