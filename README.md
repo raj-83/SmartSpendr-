@@ -5,7 +5,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 First, run the development server:
 
 
-https://spendwise-ai-x71b.vercel.app/
+https://spendwise-ai-pro.vercel.app/
 
 ```bash
 npm run dev
